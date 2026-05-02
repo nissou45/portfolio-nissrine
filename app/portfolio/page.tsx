@@ -24,7 +24,7 @@ const PROJECTS = [
     nom: "App Zenbulle",
     desc: "Application mobile de bien-être et méditation",
     tech: ["React Native", "Expo", "JavaScript"],
-    url: null,
+    url: "https://app-zenbulle.vercel.app",
     type: "mobile",
     color: "#F0EBF5",
   },
