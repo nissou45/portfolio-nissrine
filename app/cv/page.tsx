@@ -226,13 +226,15 @@ export default function Home() {
                 {
                   poste: "Développeuse Web — Stage",
                   org: "Aneo & Access IQ · Paris",
-                  date: "2024",
+                  date: "2026",
                   bullets: [
-                    "Gestion de tickets via GitHub et Notion",
-                    "Réunions Agile et suivi de projet",
-                    "Composants React & TypeScript",
-                    "Intégration Figma responsive",
-                    "Collaboration dev & product",
+                    "Développement de composants Angular et React Native (TypeScript)",
+                    "Stylisation avec Tailwind CSS et SCSS",
+                    "Intégration de maquettes Figma en responsive design",
+                    "Gestion de tickets techniques via GitHub et Notion",
+                    "Participation aux cérémonies Agile (daily, sprint review, retrospective)",
+                    "Suivi d'un projet en production et cycle de vie produit complet",
+                    "Collaboration avec les équipes dev, design et product owner",
                   ],
                 },
                 {
@@ -289,7 +291,7 @@ export default function Home() {
                 {
                   poste: "Formation Développeuse Web & Site Web",
                   org: "AFEC · Pau",
-                  date: "2023 – 2024",
+                  date: "2025 – 2026",
                   bullets: [
                     "HTML, CSS, JavaScript — fondamentaux",
                     "Projets pratiques & stage en entreprise",
