@@ -300,7 +300,7 @@ export default function Home() {
                 {
                   poste: "Montée en compétences — Self-learning",
                   org: "OpenClassroom & projets perso · En ligne",
-                  date: "2023 – présent",
+                  date: "2026 – présent",
                   bullets: [
                     "TypeScript, React, React Native, Angular, Next.js",
                     "Node.js, Express, MongoDB, Docker, SQL",
