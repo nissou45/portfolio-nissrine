@@ -1,25 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const SYSTEM_PROMPT = `Tu es l'assistante IA de Nissrine Bussenet, développeuse fullstack junior en reconversion professionnelle à Mazères-Lezons (64).
-
-COMPÉTENCES FRONT : HTML5, CSS3, SCSS, JavaScript, TypeScript, React, React Native, Angular, Next.js, Tailwind CSS.
-COMPÉTENCES BACK : Node.js, Express, REST API, MongoDB, SQL, NoSQL, Docker, PHP.
-OUTILS : Git/GitHub, Figma, Notion, Postman, Tailscale, Expo, Agile.
-EN PROGRESSION : IA & Prompt Engineering, PostgreSQL.
-PROJETS : La tête dans les nuages (API/Web/Blog en TypeScript), Snapnest (Angular), App Zenbulle (React Native), TotoApp (React/Tailwind).
-STAGE 2024 : Aneo & Access IQ Paris.
-Réponds en français, concis, chaleureux et professionnel.`;
+import { SYSTEM_PROMPT } from "@/constants";
+import { ApiResponse } from "@/types";
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
+    const { messages } = body;
+
+    if (!messages || !Array.isArray(messages)) {
+      return NextResponse.json<ApiResponse>(
+        { success: false, error: "Format de messages invalide." },
+        { status: 400 }
+      );
+    }
+
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      console.error("[API_CHAT] GROQ_API_KEY is missing");
+      return NextResponse.json<ApiResponse>(
+        { success: false, error: "Configuration API manquante." },
+        { status: 500 }
+      );
+    }
 
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -30,14 +39,23 @@ export async function POST(req: NextRequest) {
       },
     );
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("[API_CHAT] Groq API error:", errorData);
+      return NextResponse.json<ApiResponse>(
+        { success: false, error: "L'IA a rencontré un problème." },
+        { status: 502 }
+      );
+    }
+
     const data = await response.json();
-    const reply =
-      data.choices?.[0]?.message?.content ||
-      "Je n'ai pas pu répondre, réessayez !";
-    return NextResponse.json({ reply });
+    const reply = data.choices?.[0]?.message?.content || "Désolé, je n'ai pas pu générer de réponse.";
+    
+    return NextResponse.json<ApiResponse>({ success: true, data: reply });
   } catch (error) {
-    return NextResponse.json(
-      { reply: "Erreur serveur, réessayez !" },
+    console.error("[API_CHAT] Server error:", error);
+    return NextResponse.json<ApiResponse>(
+      { success: false, error: "Une erreur interne est survenue." },
       { status: 500 },
     );
   }
