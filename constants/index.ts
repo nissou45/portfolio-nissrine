@@ -13,13 +13,13 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 2,
-    nom: "Snapnest",
-    desc: "Application de partage et gestion de photos",
-    tech: ["Angular", "TypeScript"],
-    url: null,
+    nom: "Dyarna",
+    desc: "Guide touristique marocain — villes, gastronomie & traditions",
+    tech: ["Angular", "TypeScript", "SCSS", "Vercel"],
+    url: "https://snapnest-weld.vercel.app",
     type: "browser",
-    color: "#EBF0F5",
-    emoji: "📸",
+    color: "#F5EBE0",
+    emoji: "🇲🇦",
   },
   {
     id: 3,
@@ -76,13 +76,13 @@ export const CV_PROJECTS: Project[] = [
   },
   {
     id: 4,
-    nom: "Snapnest",
-    desc: "App de partage de photos",
-    tech: ["Angular", "TypeScript"],
-    url: null,
+    nom: "Dyarna",
+    desc: "Guide touristique marocain",
+    tech: ["Angular", "TypeScript", "SCSS"],
+    url: "https://snapnest-weld.vercel.app",
     type: "browser",
     color: "",
-    emoji: "📸",
+    emoji: "🇲🇦",
   },
   {
     id: 5,
@@ -151,7 +151,7 @@ export const FORMATIONS: Experience[] = [
     bullets: [
       "TypeScript, React, React Native, Angular, Next.js",
       "Node.js, Express, MongoDB, Docker, SQL",
-      "Projets : La tête dans les nuages, Snapnest, Zenbulle, TotoApp",
+      "Projets : La tête dans les nuages, Dyarna, Zenbulle, TotoApp",
       "Exploration IA & prompt engineering",
     ],
   },
@@ -251,6 +251,6 @@ COMPÉTENCES FRONT : HTML5, CSS3, SCSS, JavaScript, TypeScript, React, React Nat
 COMPÉTENCES BACK : Node.js, Express, REST API, MongoDB, SQL, NoSQL, Docker, PHP.
 OUTILS : Git/GitHub, Figma, Notion, Postman, Tailscale, Expo, Agile.
 EN PROGRESSION : IA & Prompt Engineering, PostgreSQL.
-PROJETS : La tête dans les nuages (API/Web/Blog en TypeScript), Snapnest (Angular), App Zenbulle (React Native), TotoApp (React/Tailwind).
+PROJETS : La tête dans les nuages (API/Web/Blog en TypeScript), Dyarna (Angular), App Zenbulle (React Native), TotoApp (React/Tailwind).
 STAGE 2024 : Aneo & Access IQ Paris.
 Réponds en français, concis, chaleureux et professionnel.`;
