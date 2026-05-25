@@ -31,16 +31,16 @@ export const PROJECTS: Project[] = [
     color: "#F0EBF5",
     emoji: "🧘",
   },
-  {
-    id: 4,
-    nom: "TotoApp",
-    desc: "Application de gestion de tâches personnelles",
-    tech: ["React", "Tailwind CSS"],
-    url: null,
-    type: "browser",
-    color: "#EBF5F0",
-    emoji: "✅",
-  },
+    {
+      id: 4,
+      nom: "TotoApp",
+      desc: "Application de gestion de tâches personnelles",
+      tech: ["React", "Tailwind CSS"],
+      url: "https://todo-app-hazel-iota-13.vercel.app/",
+      type: "browser",
+      color: "#EBF5F0",
+      emoji: "✅",
+    },
 ];
 
 export const CV_PROJECTS: Project[] = [
@@ -94,16 +94,16 @@ export const CV_PROJECTS: Project[] = [
     color: "",
     emoji: "🧘",
   },
-  {
-    id: 6,
-    nom: "TotoApp",
-    desc: "Gestion de tâches",
-    tech: ["React", "Tailwind"],
-    url: null,
-    type: "browser",
-    color: "",
-    emoji: "✅",
-  },
+    {
+      id: 6,
+      nom: "TotoApp",
+      desc: "Gestion de tâches",
+      tech: ["React", "Tailwind"],
+      url: "https://todo-app-hazel-iota-13.vercel.app/",
+      type: "browser",
+      color: "",
+      emoji: "✅",
+    },
 ];
 
 export const EXPERIENCES: Experience[] = [
