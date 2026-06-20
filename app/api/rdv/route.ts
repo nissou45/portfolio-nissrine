@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiResponse } from "@/types";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 5; // 5 requests per minute
 
 /** Escape HTML entities to prevent XSS in email content */
 function escapeHtml(str: string): string {
@@ -13,6 +17,15 @@ function escapeHtml(str: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting by IP
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    if (!checkRateLimit(`rdv:${ip}`, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS)) {
+      return NextResponse.json<ApiResponse>(
+        { success: false, error: "Trop de requêtes. Réessayez dans une minute." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { nom, email, motif, date, msg } = body;
 
@@ -61,7 +74,7 @@ export async function POST(req: NextRequest) {
             <p><strong>Date souhaitée :</strong> ${date ? escapeHtml(date) : "Non précisée"}</p>
             <div style="margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px; border-left: 4px solid #6d28d9;">
               <strong>Message :</strong><br/>
-              ${(msg || "Aucun message").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br/>')}
+              ${escapeHtml(msg || "Aucun message").replace(/\n/g, '<br/>')}
             </div>
           </div>
         `,
