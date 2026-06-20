@@ -157,9 +157,21 @@ function Projects() {
                 <div className="phone-wrap">
                   <div className="phone" data-tilt>
                     <div className="screen" style={{ background: p.color }}>
-                      <div className="deco" />
-                      <div className="glyph">{p.emoji}</div>
-                      <div className="ttl">{p.nom}</div>
+                      {p.url ? (
+                        <iframe
+                          src={p.url}
+                          className="w-full h-full border-0"
+                          title={`${p.nom} preview`}
+                          loading="lazy"
+                          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                        />
+                      ) : (
+                        <>
+                          <div className="deco" />
+                          <div className="glyph">{p.emoji}</div>
+                          <div className="ttl">{p.nom}</div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -171,12 +183,24 @@ function Projects() {
                       <i />
                       <i />
                     </div>
-                    <div className="url">{shortUrl(p.url)}</div>
+                    <div className="url">{p.url ? shortUrl(p.url) : "Bientôt disponible…"}</div>
                   </div>
                   <div className="screen" style={{ background: p.color }}>
-                    <div className="deco" />
-                    <div className="glyph">{p.emoji}</div>
-                    <div className="ttl">{p.nom}</div>
+                    {p.url ? (
+                      <iframe
+                        src={p.url}
+                        className="w-full h-full border-0"
+                        title={`${p.nom} preview`}
+                        loading="lazy"
+                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                      />
+                    ) : (
+                      <>
+                        <div className="deco" />
+                        <div className="glyph">{p.emoji}</div>
+                        <div className="ttl">{p.nom}</div>
+                      </>
+                    )}
                   </div>
                 </div>
               );
