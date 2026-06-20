@@ -14,7 +14,21 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Nissrine Bussenet | Développeuse Fullstack",
-  description: "Portfolio de Nissrine Bussenet, développeuse fullstack junior en reconversion professionnelle. React, Angular, Node.js, MongoDB.",
+  description:
+    "Portfolio de Nissrine Bussenet, développeuse fullstack junior en reconversion professionnelle. React, Angular, Node.js, MongoDB.",
+  openGraph: {
+    title: "Nissrine Bussenet | Développeuse Fullstack",
+    description:
+      "Développeuse fullstack junior en reconversion — React, Angular, Node.js, MongoDB, Next.js.",
+    type: "website",
+    locale: "fr_FR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Nissrine Bussenet | Développeuse Fullstack",
+    description:
+      "Développeuse fullstack junior en reconversion — React, Angular, Node.js, MongoDB, Next.js.",
+  },
 };
 
 export default function RootLayout({
@@ -24,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
