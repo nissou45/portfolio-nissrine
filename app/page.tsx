@@ -15,6 +15,34 @@ function shortUrl(u: string | null) {
   return u.replace(/^https?:\/\//, "").replace(/\/$/, "");
 }
 
+/* ---------- THEME TOGGLE ---------- */
+function ThemeToggle() {
+  const [theme, setTheme] = useState("light");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") || "light";
+    setTheme(saved);
+    document.documentElement.setAttribute("data-theme", saved);
+  }, []);
+
+  const toggle = () => {
+    const next = theme === "light" ? "dark" : "light";
+    setTheme(next);
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+  };
+
+  return (
+    <button
+      onClick={toggle}
+      className="theme-toggle"
+      aria-label={`Passer en mode ${theme === "light" ? "sombre" : "clair"}`}
+    >
+      {theme === "light" ? "🌙" : "☀️"}
+    </button>
+  );
+}
+
 /* ---------- NAV ---------- */
 function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -44,6 +72,7 @@ function Nav() {
         <span className="dot live" />
         <span>Disponible</span>
       </a>
+      <ThemeToggle />
     </nav>
   );
 }
