@@ -14,6 +14,12 @@ export const useChat = () => {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const msgsRef = useRef<ChatMessage[]>(msgs);
+
+  // Keep msgsRef in sync
+  useEffect(() => {
+    msgsRef.current = msgs;
+  }, [msgs]);
 
   // Cleanup abort controller on unmount
   useEffect(() => {
@@ -30,7 +36,8 @@ export const useChat = () => {
     setError(null);
 
     const userMsg: ChatMessage = { role: 'user', text: query };
-    setMsgs((prev) => [...prev, userMsg]);
+    const history = [...msgsRef.current, userMsg];
+    setMsgs(history);
     setLoading(true);
 
     // Abort any in-flight request
@@ -45,7 +52,7 @@ export const useChat = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...msgs, userMsg].map((m) => ({
+          messages: history.map((m) => ({
             role: m.role,
             content: m.text,
           })),
