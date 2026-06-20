@@ -1,33 +1,33 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Nissrine Bussenet | Développeuse Fullstack",
+  title: "Nissrine Bussenet — Développeuse Fullstack",
   description:
-    "Portfolio de Nissrine Bussenet, développeuse fullstack junior en reconversion professionnelle. React, Angular, Node.js, MongoDB.",
+    "Portfolio de Nissrine Bussenet, développeuse fullstack en reconversion. Web & mobile — React, Angular, Node.js, Next.js.",
   openGraph: {
-    title: "Nissrine Bussenet | Développeuse Fullstack",
+    title: "Nissrine Bussenet — Développeuse Fullstack",
     description:
-      "Développeuse fullstack junior en reconversion — React, Angular, Node.js, MongoDB, Next.js.",
+      "Développeuse fullstack en reconversion — React, Angular, Node.js, MongoDB, Next.js.",
     type: "website",
     locale: "fr_FR",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nissrine Bussenet | Développeuse Fullstack",
+    title: "Nissrine Bussenet — Développeuse Fullstack",
     description:
-      "Développeuse fullstack junior en reconversion — React, Angular, Node.js, MongoDB, Next.js.",
+      "Développeuse fullstack en reconversion — React, Angular, Node.js, MongoDB, Next.js.",
   },
 };
 
@@ -39,9 +39,12 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      data-theme="light"
+      data-palette="aurore"
+      data-motion="on"
+      className={`${outfit.variable} ${jakarta.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }
