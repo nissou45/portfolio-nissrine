@@ -1,6 +1,6 @@
 export const CvProfileSummary = () => {
-  const stack = ["Re", "TS", "Ng", "RN", "NJ", "No", "🌱"];
-  
+  const stack = ["React", "TS", "Angular", "RN", "Next", "Node", "🌱"];
+
   return (
     <div className="bg-gradient-to-r from-purple-50 to-amber-50 px-6 md:px-10 py-6 border-y border-purple-100">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">

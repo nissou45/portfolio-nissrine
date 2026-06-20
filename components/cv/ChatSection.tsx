@@ -1,10 +1,17 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useChat } from "@/hooks/useChat";
 import { SUGGESTIONS } from "@/constants";
 
 export const ChatSection = () => {
   const { msgs, loading, input, error, setInput, sendChat } = useChat();
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [msgs, loading]);
 
   return (
     <div className="flex flex-col h-[500px] md:h-96">
@@ -16,13 +23,13 @@ export const ChatSection = () => {
         Posez-moi une question sur son parcours, ses projets ou ses
         compétences !
       </div>
-      
+
       {error && (
         <div className="p-2 mb-4 rounded-lg bg-red-50 border border-red-100 text-xs text-red-600 text-center">
           {error}
         </div>
       )}
-      
+
       <div className="flex flex-wrap gap-2 mb-4">
         {SUGGESTIONS.map((s, i) => (
           <button
@@ -34,7 +41,7 @@ export const ChatSection = () => {
           </button>
         ))}
       </div>
-      
+
       <div className="flex-1 mb-4 flex flex-col gap-3 overflow-y-auto scrollbar-hide">
         {msgs.map((m, i) => (
           <div
@@ -53,8 +60,9 @@ export const ChatSection = () => {
             En train de répondre…
           </div>
         )}
+        <div ref={bottomRef} />
       </div>
-      
+
       <div className="mt-auto flex gap-3">
         <input
           value={input}

@@ -16,6 +16,9 @@ export const ContactSection = () => {
   );
 };
 
+const isExternalLink = (href: string) =>
+  href.startsWith("http") || href.startsWith("//");
+
 const ContactItem = ({ contact }: { contact: ContactInfo }) => (
   <div className="bg-stone-50 rounded-xl p-4 flex items-center gap-3 border border-stone-100">
     <div className="w-9 h-9 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center text-sm font-bold text-purple-600 flex-shrink-0">
@@ -28,7 +31,9 @@ const ContactItem = ({ contact }: { contact: ContactInfo }) => (
       {contact.href ? (
         <a
           href={contact.href}
-          target="_blank"
+          {...(isExternalLink(contact.href)
+            ? { target: "_blank", rel: "noopener noreferrer" }
+            : {})}
           className="text-sm font-semibold text-stone-700 hover:text-purple-600"
         >
           {contact.val}

@@ -14,6 +14,7 @@ export function MobileMockup({ url, color }: { url: string | null; color: string
             className="w-full h-full border-0"
             title="Mobile preview"
             loading="lazy"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           />
         ) : (
           <div className="h-full flex flex-col items-center justify-center gap-3">

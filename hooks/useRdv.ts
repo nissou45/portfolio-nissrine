@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { RdvForm, ApiResponse } from '@/types';
 
 const RDV_TIMEOUT_MS = 15_000;
@@ -15,6 +15,12 @@ export const useRdv = () => {
   const [rdvLoading, setRdvLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const rdvRef = useRef(rdv);
+
+  // Keep rdvRef in sync
+  useEffect(() => {
+    rdvRef.current = rdv;
+  }, [rdv]);
 
   // Cleanup abort controller on unmount
   useEffect(() => {
@@ -23,14 +29,16 @@ export const useRdv = () => {
     };
   }, []);
 
-  const sendRdv = useCallback(async () => {
-    if (!rdv.nom.trim() || !rdv.email.trim()) {
+  const sendRdv = async () => {
+    const currentRdv = rdvRef.current;
+
+    if (!currentRdv.nom.trim() || !currentRdv.email.trim()) {
       setError("Le nom et l'email sont obligatoires.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(rdv.email)) {
+    if (!emailRegex.test(currentRdv.email)) {
       setError("Format d'email invalide.");
       return;
     }
@@ -49,7 +57,7 @@ export const useRdv = () => {
       const res = await fetch("/api/rdv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(rdv),
+        body: JSON.stringify(currentRdv),
         signal: controller.signal,
       });
 
@@ -67,11 +75,11 @@ export const useRdv = () => {
       clearTimeout(timeoutId);
       setRdvLoading(false);
     }
-  }, [rdv]);
+  };
 
-  const updateRdv = useCallback((key: keyof RdvForm, value: string) => {
+  const updateRdv = (key: keyof RdvForm, value: string) => {
     setRdv((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  };
 
   return {
     rdv,
