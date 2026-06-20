@@ -2,8 +2,12 @@
 
 import { useRdv } from "@/hooks/useRdv";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const RdvSection = () => {
   const { rdv, rdvSent, rdvLoading, error, sendRdv, updateRdv } = useRdv();
+
+  const isFormValid = rdv.nom.trim() && rdv.email.trim() && EMAIL_REGEX.test(rdv.email);
 
   return (
     <div>
@@ -69,7 +73,7 @@ export const RdvSection = () => {
 
           <button
             onClick={sendRdv}
-            disabled={rdvLoading || !rdv.nom || !rdv.email}
+            disabled={rdvLoading || !isFormValid}
             className="w-full py-3 rounded-xl bg-purple-700 text-white font-bold text-sm transition hover:bg-purple-600 disabled:opacity-40"
           >
             {rdvLoading ? "Envoi en cours…" : "Envoyer ma demande ✨"}

@@ -1,5 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChatMessage, ApiResponse } from '@/types';
+
+const CHAT_TIMEOUT_MS = 15_000;
 
 export const useChat = () => {
   const [msgs, setMsgs] = useState<ChatMessage[]>([
@@ -11,47 +13,63 @@ export const useChat = () => {
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const sendChat = useCallback(async (text?: string) => {
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  const sendChat = async (text?: string) => {
     const query = (text || input).trim();
     if (!query || loading) return;
-    
+
     setInput("");
     setError(null);
-    
+
     const userMsg: ChatMessage = { role: 'user', text: query };
-    const newMsgs = [...msgs, userMsg];
-    
-    setMsgs(newMsgs);
+    setMsgs((prev) => [...prev, userMsg]);
     setLoading(true);
-    
+
+    // Abort any in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const timeoutId = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: newMsgs.map((m) => ({
+          messages: [...msgs, userMsg].map((m) => ({
             role: m.role,
             content: m.text,
           })),
         }),
+        signal: controller.signal,
       });
-      
+
       const result: ApiResponse<string> = await res.json();
-      
+
       if (!result.success) {
         throw new Error(result.error || "Erreur lors de la réponse.");
       }
-      
+
       setMsgs((prev) => [...prev, { role: 'assistant', text: result.data! }]);
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       const errMsg = err instanceof Error ? err.message : "Erreur de connexion !";
       setError(errMsg);
       setMsgs((prev) => [...prev, { role: 'assistant', text: "Désolée, je rencontre une petite difficulté technique. Réessayez ?" }]);
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, [input, loading, msgs]);
+  };
 
   return {
     msgs,
