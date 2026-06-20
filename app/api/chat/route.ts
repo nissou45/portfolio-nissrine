@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { SYSTEM_PROMPT } from "@/constants";
 import { ApiResponse } from "@/types";
 
+const GROQ_TIMEOUT_MS = 15_000;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -23,6 +25,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS);
+
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -32,12 +37,16 @@ export async function POST(req: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama3-8b-8192",
+          model: "llama-3.3-70b-versatile",
           messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-          max_tokens: 400,
+          max_tokens: 800,
+          temperature: 0.7,
         }),
+        signal: controller.signal,
       },
     );
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -53,6 +62,13 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json<ApiResponse>({ success: true, data: reply });
   } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      console.error("[API_CHAT] Request timed out");
+      return NextResponse.json<ApiResponse>(
+        { success: false, error: "L'IA met trop de temps à répondre. Réessayez ?" },
+        { status: 504 }
+      );
+    }
     console.error("[API_CHAT] Server error:", error);
     return NextResponse.json<ApiResponse>(
       { success: false, error: "Une erreur interne est survenue." },
