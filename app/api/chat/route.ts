@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SYSTEM_PROMPT } from "@/constants";
 import { ApiResponse } from "@/types";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const GROQ_TIMEOUT_MS = 15_000;
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per minute
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting by IP
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    if (!checkRateLimit(`chat:${ip}`, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS)) {
+      return NextResponse.json<ApiResponse>(
+        { success: false, error: "Trop de requêtes. Réessayez dans une minute." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { messages } = body;
 
