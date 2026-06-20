@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiResponse } from "@/types";
 
+/** Escape HTML entities to prevent XSS in email content */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -41,17 +51,17 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         from: "portfolio@resend.dev",
         to: process.env.EMAIL_TO || "niss91@icloud.com",
-        subject: `Nouveau RDV — ${motif} — ${nom}`,
+        subject: `Nouveau RDV — ${escapeHtml(motif)} — ${escapeHtml(nom)}`,
         html: `
           <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
             <h2 style="color: #6d28d9;">Nouvelle demande de RDV 📅</h2>
-            <p><strong>Nom :</strong> ${nom}</p>
-            <p><strong>Email :</strong> ${email}</p>
-            <p><strong>Motif :</strong> ${motif}</p>
-            <p><strong>Date souhaitée :</strong> ${date || "Non précisée"}</p>
+            <p><strong>Nom :</strong> ${escapeHtml(nom)}</p>
+            <p><strong>Email :</strong> ${escapeHtml(email)}</p>
+            <p><strong>Motif :</strong> ${escapeHtml(motif)}</p>
+            <p><strong>Date souhaitée :</strong> ${date ? escapeHtml(date) : "Non précisée"}</p>
             <div style="margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px; border-left: 4px solid #6d28d9;">
               <strong>Message :</strong><br/>
-              ${(msg || "Aucun message").replace(/\n/g, '<br/>')}
+              ${(msg || "Aucun message").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br/>')}
             </div>
           </div>
         `,

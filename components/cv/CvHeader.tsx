@@ -15,7 +15,14 @@ export const CvHeader = () => {
         <div className="text-left md:text-right text-sm text-stone-400 leading-relaxed">
           <div>niss91@icloud.com</div>
           <div>06 56 75 07 71</div>
-          <div>github.com/nissou45</div>
+          <a
+            href="https://github.com/nissou45"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-purple-600 transition"
+          >
+            github.com/nissou45
+          </a>
         </div>
       </div>
 
