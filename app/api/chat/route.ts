@@ -1,15 +1,6 @@
 import { NextRequest } from "next/server";
-import { SYSTEM_PROMPT_BASE } from "@/constants";
-import { PROJECTS, EXPERIENCES, FORMATIONS, SKILL_CATEGORIES } from "@/constants";
-
-const GROQ_TIMEOUT_MS = 25_000;
-
-interface GroqStreamChoice {
-  delta: { content?: string };
-}
-interface GroqStreamChunk {
-  choices?: GroqStreamChoice[];
-}
+import { SYSTEM_PROMPT_BASE, PROJECTS, EXPERIENCES, FORMATIONS, SKILL_CATEGORIES } from "@/constants";
+import { streamGroqChat } from "@/lib/groq";
 
 function buildSystemPrompt(): string {
   const projectsStr = PROJECTS.map(
@@ -72,68 +63,13 @@ export async function POST(req: NextRequest) {
 
         const systemPrompt = buildSystemPrompt();
 
-        const abortController = new AbortController();
-        const timeoutId = setTimeout(() => abortController.abort(), GROQ_TIMEOUT_MS);
-
-        const groqRes = await fetch(
-          "https://api.groq.com/openai/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "llama-3.3-70b-versatile",
-              messages: [{ role: "system", content: systemPrompt }, ...messages],
-              max_tokens: 2048,
-              temperature: 0.7,
-              stream: true,
-            }),
-            signal: abortController.signal,
-          },
+        await streamGroqChat(
+          apiKey,
+          systemPrompt,
+          messages,
+          (text) => controller.enqueue(encoder.encode(text)),
+          (msg) => sendError(msg),
         );
-
-        clearTimeout(timeoutId);
-
-        if (!groqRes.ok) {
-          const errBody = await groqRes.json().catch(() => ({}));
-          console.error("[API_CHAT] Groq API error:", errBody);
-          sendError("L'IA a rencontré un problème.");
-          return;
-        }
-
-        const reader = groqRes.body?.getReader();
-        if (!reader) {
-          sendError("Impossible de lire le flux.");
-          return;
-        }
-
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith("data: ")) continue;
-            const data = trimmed.slice(6);
-            if (data === "[DONE]") continue;
-            try {
-              const parsed = JSON.parse(data) as GroqStreamChunk;
-              const content = parsed.choices?.[0]?.delta?.content || "";
-              if (content) {
-                controller.enqueue(encoder.encode(content));
-              }
-            } catch { /* skip malformed chunk */ }
-          }
-        }
 
         controller.close();
       } catch (error) {
