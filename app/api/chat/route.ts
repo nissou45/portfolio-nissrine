@@ -1,90 +1,150 @@
-import { NextRequest, NextResponse } from "next/server";
-import { SYSTEM_PROMPT } from "@/constants";
-import { ApiResponse } from "@/types";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { NextRequest } from "next/server";
+import { SYSTEM_PROMPT_BASE } from "@/constants";
+import { PROJECTS, EXPERIENCES, FORMATIONS, SKILL_CATEGORIES } from "@/constants";
 
-const GROQ_TIMEOUT_MS = 15_000;
-const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per minute
+const GROQ_TIMEOUT_MS = 25_000;
+
+function buildSystemPrompt(): string {
+  const projectsStr = PROJECTS.map(
+    (p) => `- ${p.nom} : ${p.desc} (${p.tech.join(", ")})${p.url ? ` → ${p.url}` : ""}`
+  ).join("\n");
+
+  const skillsStr = SKILL_CATEGORIES.map(
+    (s) => `${s.cat} : ${s.items.join(", ")}${s.grow ? " 🌱" : ""}`
+  ).join("\n");
+
+  const experiencesStr = EXPERIENCES.map(
+    (e) => `- ${e.poste} @ ${e.org} (${e.date})\n  ${e.bullets.map((b) => `• ${b}`).join("\n  ")}`
+  ).join("\n\n");
+
+  const formationsStr = FORMATIONS.map(
+    (f) => `- ${f.poste} @ ${f.org} (${f.date})\n  ${f.bullets.map((b) => `• ${b}`).join("\n  ")}`
+  ).join("\n\n");
+
+  return `${SYSTEM_PROMPT_BASE}
+
+## DONNÉES DYNAMIQUES (injectées automatiquement)
+
+### Projets
+${projectsStr}
+
+### Compétences
+${skillsStr}
+
+### Expériences
+${experiencesStr}
+
+### Formations
+${formationsStr}`;
+}
 
 export async function POST(req: NextRequest) {
-  try {
-    // Rate limiting by IP
-    const ip = req.headers.get("x-forwarded-for") || "unknown";
-    if (!checkRateLimit(`chat:${ip}`, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS)) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Trop de requêtes. Réessayez dans une minute." },
-        { status: 429 }
-      );
-    }
+  const encoder = new TextEncoder();
 
-    const body = await req.json();
-    const { messages } = body;
+  const stream = new ReadableStream({
+    async start(controller) {
+      const sendError = (msg: string) => {
+        controller.enqueue(encoder.encode(JSON.stringify({ error: msg }) + "\n"));
+        controller.close();
+      };
 
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Format de messages invalide." },
-        { status: 400 }
-      );
-    }
+      try {
+        const body = await req.json();
+        const { messages } = body;
 
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      console.error("[API_CHAT] GROQ_API_KEY is missing");
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Configuration API manquante." },
-        { status: 500 }
-      );
-    }
+        if (!messages || !Array.isArray(messages)) {
+          sendError("Format de messages invalide.");
+          return;
+        }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS);
+        const apiKey = process.env.GROQ_API_KEY;
+        if (!apiKey) {
+          sendError("Configuration API manquante.");
+          return;
+        }
 
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-          max_tokens: 800,
-          temperature: 0.7,
-        }),
-        signal: controller.signal,
-      },
-    );
+        const systemPrompt = buildSystemPrompt();
 
-    clearTimeout(timeoutId);
+        const abortController = new AbortController();
+        const timeoutId = setTimeout(() => abortController.abort(), GROQ_TIMEOUT_MS);
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("[API_CHAT] Groq API error:", errorData);
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "L'IA a rencontré un problème." },
-        { status: 502 }
-      );
-    }
+        const groqRes = await fetch(
+          "https://api.groq.com/openai/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "llama-3.3-70b-versatile",
+              messages: [{ role: "system", content: systemPrompt }, ...messages],
+              max_tokens: 2048,
+              temperature: 0.7,
+              stream: true,
+            }),
+            signal: abortController.signal,
+          },
+        );
 
-    const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "Désolé, je n'ai pas pu générer de réponse.";
-    
-    return NextResponse.json<ApiResponse>({ success: true, data: reply });
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      console.error("[API_CHAT] Request timed out");
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "L'IA met trop de temps à répondre. Réessayez ?" },
-        { status: 504 }
-      );
-    }
-    console.error("[API_CHAT] Server error:", error);
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: "Une erreur interne est survenue." },
-      { status: 500 },
-    );
-  }
+        clearTimeout(timeoutId);
+
+        if (!groqRes.ok) {
+          const errBody = await groqRes.json().catch(() => ({}));
+          console.error("[API_CHAT] Groq API error:", errBody);
+          sendError("L'IA a rencontré un problème.");
+          return;
+        }
+
+        const reader = groqRes.body?.getReader();
+        if (!reader) {
+          sendError("Impossible de lire le flux.");
+          return;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || !trimmed.startsWith("data: ")) continue;
+            const data = trimmed.slice(6);
+            if (data === "[DONE]") continue;
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || "";
+              if (content) {
+                controller.enqueue(encoder.encode(content));
+              }
+            } catch { /* skip malformed chunk */ }
+          }
+        }
+
+        controller.close();
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          controller.enqueue(encoder.encode("\n\n⏱️ Désolée, la réponse a pris trop de temps."));
+        } else {
+          console.error("[API_CHAT] Stream error:", error);
+          controller.enqueue(encoder.encode("\n\nUne erreur est survenue."));
+        }
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache",
+    },
+  });
 }

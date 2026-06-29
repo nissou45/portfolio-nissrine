@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChatMessage, ApiResponse } from '@/types';
-
-const CHAT_TIMEOUT_MS = 15_000;
+import { ChatMessage } from '@/types';
 
 export const useChat = () => {
   const [msgs, setMsgs] = useState<ChatMessage[]>([
@@ -16,12 +14,10 @@ export const useChat = () => {
   const abortRef = useRef<AbortController | null>(null);
   const msgsRef = useRef<ChatMessage[]>(msgs);
 
-  // Keep msgsRef in sync
   useEffect(() => {
     msgsRef.current = msgs;
   }, [msgs]);
 
-  // Cleanup abort controller on unmount
   useEffect(() => {
     return () => {
       abortRef.current?.abort();
@@ -40,12 +36,12 @@ export const useChat = () => {
     setMsgs(history);
     setLoading(true);
 
-    // Abort any in-flight request
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const timeoutId = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
+    // Add an empty assistant message that we'll fill progressively
+    setMsgs((prev) => [...prev, { role: 'assistant', text: '' }]);
 
     try {
       const res = await fetch("/api/chat", {
@@ -60,20 +56,54 @@ export const useChat = () => {
         signal: controller.signal,
       });
 
-      const result: ApiResponse<string> = await res.json();
-
-      if (!result.success) {
-        throw new Error(result.error || "Erreur lors de la réponse.");
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        let errMsg = "Erreur lors de la réponse.";
+        try { errMsg = JSON.parse(text).error || errMsg; } catch { errMsg = text || errMsg; }
+        throw new Error(errMsg);
       }
 
-      setMsgs((prev) => [...prev, { role: 'assistant', text: result.data! }]);
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("Impossible de lire le flux.");
+
+      const decoder = new TextDecoder();
+      let accumulated = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        // Could be plain text or JSON error
+        if (chunk.startsWith("{")) {
+          try {
+            const errData = JSON.parse(chunk);
+            if (errData.error) throw new Error(errData.error);
+          } catch (e) {
+            if (e instanceof Error && e.message !== "Unexpected token") throw e;
+          }
+        }
+        accumulated += chunk;
+        // Update the last assistant message (the empty one we added)
+        setMsgs((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = { role: 'assistant', text: accumulated };
+          return next;
+        });
+      }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       const errMsg = err instanceof Error ? err.message : "Erreur de connexion !";
       setError(errMsg);
-      setMsgs((prev) => [...prev, { role: 'assistant', text: "Désolée, je rencontre une petite difficulté technique. Réessayez ?" }]);
+      setMsgs((prev) => {
+        const next = [...prev];
+        const last = next[next.length - 1];
+        if (last && last.role === 'assistant' && last.text === '') {
+          next[next.length - 1] = { role: 'assistant', text: "Désolée, je rencontre une petite difficulté technique. Réessayez ?" };
+        }
+        return next;
+      });
     } finally {
-      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
