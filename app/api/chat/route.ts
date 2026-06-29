@@ -4,6 +4,13 @@ import { PROJECTS, EXPERIENCES, FORMATIONS, SKILL_CATEGORIES } from "@/constants
 
 const GROQ_TIMEOUT_MS = 25_000;
 
+interface GroqStreamChoice {
+  delta: { content?: string };
+}
+interface GroqStreamChunk {
+  choices?: GroqStreamChoice[];
+}
+
 function buildSystemPrompt(): string {
   const projectsStr = PROJECTS.map(
     (p) => `- ${p.nom} : ${p.desc} (${p.tech.join(", ")})${p.url ? ` → ${p.url}` : ""}`
@@ -119,7 +126,7 @@ export async function POST(req: NextRequest) {
             const data = trimmed.slice(6);
             if (data === "[DONE]") continue;
             try {
-              const parsed = JSON.parse(data);
+              const parsed = JSON.parse(data) as GroqStreamChunk;
               const content = parsed.choices?.[0]?.delta?.content || "";
               if (content) {
                 controller.enqueue(encoder.encode(content));

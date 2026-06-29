@@ -74,15 +74,6 @@ export const useChat = () => {
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        // Could be plain text or JSON error
-        if (chunk.startsWith("{")) {
-          try {
-            const errData = JSON.parse(chunk);
-            if (errData.error) throw new Error(errData.error);
-          } catch (e) {
-            if (e instanceof Error && e.message !== "Unexpected token") throw e;
-          }
-        }
         accumulated += chunk;
         // Update the last assistant message (the empty one we added)
         setMsgs((prev) => {

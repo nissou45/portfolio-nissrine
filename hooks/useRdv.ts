@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { RdvForm, ApiResponse } from '@/types';
+import { EMAIL_RE } from '@/constants';
 
 const RDV_TIMEOUT_MS = 15_000;
 
@@ -37,8 +38,7 @@ export const useRdv = () => {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(currentRdv.email)) {
+    if (!EMAIL_RE.test(currentRdv.email)) {
       setError("Format d'email invalide.");
       return;
     }

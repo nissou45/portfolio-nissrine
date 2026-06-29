@@ -30,10 +30,4 @@ export function checkRateLimit(
   return true;
 }
 
-/** Clean up expired entries every 5 minutes */
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of store) {
-    if (now > entry.resetAt) store.delete(key);
-  }
-}, 5 * 60 * 1000);
+/** Cleanup is unnecessary in serverless — the Map lives one invocation */

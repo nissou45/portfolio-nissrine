@@ -2,13 +2,12 @@
 
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import { PROJECTS, EXPERIENCES, FORMATIONS, SKILL_CATEGORIES, SUGGESTIONS } from "@/constants";
+import { PROJECTS, EXPERIENCES, FORMATIONS, SKILL_CATEGORIES, SUGGESTIONS, EMAIL_RE } from "@/constants";
 import { useChat } from "@/hooks/useChat";
 import { useRdv } from "@/hooks/useRdv";
 
 const STACK = ["React", "TypeScript", "Next.js", "Node.js", "Angular", "React Native", "MongoDB", "Docker", "Tailwind", "Express", "SCSS", "Figma"];
 const MOTIFS = ["Recrutement CDI", "Recrutement CDD", "Mission Freelance", "Collaboration projet", "Autre"];
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function shortUrl(u: string | null) {
   if (!u) return "";
